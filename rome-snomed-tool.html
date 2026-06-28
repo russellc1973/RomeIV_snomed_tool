@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gut-Brain Interaction Disorder Classifier — SNOMED CT / ECL</title>
+<style>
+  :root{
+    --ink:#1a2420;
+    --paper:#eef1ee;
+    --panel:#ffffff;
+    --line:#c7d0c7;
+    --teal:#15524a;
+    --teal-deep:#0d342f;
+    --amber:#9a5b18;
+    --muted:#5d6a62;
+    --danger:#7a1f1f;
+    --danger-bg:#fbeaea;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--paper);
+    color:var(--ink);
+    font-family:'Iowan Old Style','Palatino Linotype',Georgia,serif;
+    line-height:1.5;
+  }
+  .mono{font-family:'IBM Plex Mono','SF Mono','Courier New',monospace;}
+
+  header{
+    border-bottom:2px solid var(--ink);
+    padding:2rem 1.5rem 1.2rem;
+    max-width:960px;
+    margin:0 auto;
+  }
+  .eyebrow{
+    text-transform:uppercase;
+    font-size:.7rem;
+    letter-spacing:.16em;
+    color:var(--teal);
+    margin-bottom:.5rem;
+  }
+  h1{ font-size:1.95rem; margin:0 0 .4rem; font-weight:600; }
+  .sub{ color:var(--muted); font-size:1rem; max-width:660px; }
+
+  main{ max-width:960px; margin:0 auto; padding:1.8rem 1.5rem 4rem; }
+
+  .panel{
+    background:var(--panel);
+    border:1px solid var(--line);
+    padding:1.8rem;
+    position:relative;
+  }
+  .panel::before{
+    content:""; position:absolute; top:0; left:0; width:4px; height:100%;
+    background:var(--teal);
+  }
+
+  /* CAT 1 SCREEN */
+  .cat1-box{
+    border:1px solid var(--danger);
+    background:var(--danger-bg);
+  }
+  .cat1-box::before{ background:var(--danger); }
+  .cat1-box h2{ color:var(--danger); font-size:1.25rem; margin-top:0; }
+  .cat1-list{ list-style:none; margin:0; padding:0; }
+  .cat1-list li{
+    border-bottom:1px solid #e3c9c9;
+    padding:.7rem 0;
+    display:flex;
+    align-items:flex-start;
+    gap:.7rem;
+  }
+  .cat1-list li:last-child{ border-bottom:none; }
+  .cat1-list input[type=checkbox]{
+    margin-top:.2rem;
+    width:18px; height:18px;
+    accent-color:var(--danger);
+    flex-shrink:0;
+  }
+  .cat1-list label{ cursor:pointer; }
+  .cat1-group-title{
+    font-size:.72rem;
+    text-transform:uppercase;
+    letter-spacing:.1em;
+    color:var(--amber);
+    margin:1.3rem 0 .3rem;
+  }
+  .cat1-group-title:first-of-type{ margin-top:.6rem; }
+
+  .btn{
+    font-family:'IBM Plex Mono','Courier New',monospace;
+    font-size:.85rem;
+    background:var(--teal);
+    color:#fff;
+    border:none;
+    padding:.75rem 1.4rem;
+    cursor:pointer;
+    margin-top:1.5rem;
+    border-radius:2px;
+  }
+  .btn:hover{ background:var(--teal-deep); }
+  .btn.danger{ background:var(--danger); }
+  .btn.danger:hover{ background:#5e1818; }
+  .btn-row{ display:flex; gap:.8rem; flex-wrap:wrap; }
+
+  /* QUESTION SCREEN */
+  .q-index{
+    font-size:.74rem;
+    text-transform:uppercase;
+    letter-spacing:.12em;
+    color:var(--amber);
+    margin-bottom:.5rem;
+  }
+  .q-text{ font-size:1.28rem; margin:0 0 .3rem; font-weight:600; }
+  .q-help{ color:var(--muted); font-size:.9rem; margin-bottom:1.3rem; max-width:580px; }
+  .options{ display:flex; flex-direction:column; gap:.6rem; }
+  .opt-btn{
+    text-align:left; background:transparent; border:1px solid var(--line);
+    padding:.85rem 1rem; font-family:inherit; font-size:1rem; color:var(--ink);
+    cursor:pointer; border-radius:2px;
+  }
+  .opt-btn:hover{ border-color:var(--teal); background:#eef5f1; }
+  .opt-btn .tag{ display:block; font-size:.7rem; color:var(--teal); margin-top:.2rem; }
+  .mono.tag{ font-family:'IBM Plex Mono','Courier New',monospace; }
+  .nav-row{ margin-top:1.5rem; display:flex; justify-content:space-between; }
+  .link-btn{
+    font-family:'IBM Plex Mono','Courier New',monospace; font-size:.76rem;
+    color:var(--muted); background:none; border:none; cursor:pointer; text-decoration:underline; padding:0;
+  }
+  .link-btn:disabled{ visibility:hidden; }
+
+  /* RESULT SCREEN */
+  .result-head{
+    background:var(--teal-deep); color:var(--paper); padding:1.6rem 1.8rem;
+  }
+  .result-head .eyebrow{ color:#a9d4c7; }
+  .result-head h2{ margin:.2rem 0 .35rem; font-size:1.55rem; }
+  .snomed-binding{
+    font-size:.8rem; color:#cfe6dc; display:flex; flex-wrap:wrap; gap:1.2rem; margin-top:.4rem;
+  }
+  .snomed-binding b{ color:#fff; font-weight:600; }
+  .result-body{ background:var(--panel); padding:1.8rem; border:1px solid var(--line); border-top:none; }
+  .result-body h3{
+    font-size:.95rem; text-transform:uppercase; letter-spacing:.07em; color:var(--teal);
+    border-bottom:1px solid var(--line); padding-bottom:.35rem; margin:1.4rem 0 .7rem;
+  }
+  .result-body h3:first-of-type{ margin-top:0; }
+  .rec-list{ margin:0; padding-left:1.2rem; }
+  .rec-list li{ margin-bottom:.5rem; }
+  .rec-list b{ color:var(--teal-deep); }
+
+  .ecl-row{
+    display:flex; justify-content:space-between; align-items:baseline;
+    background:#f3f6f3; border:1px solid var(--line); padding:.6rem .8rem; margin-top:.6rem;
+    font-size:.82rem; flex-wrap:wrap; gap:.4rem;
+  }
+  .ecl-row .ecl-expr{ color:var(--teal-deep); }
+
+  table.xml-table{
+    width:100%; border-collapse:collapse; font-size:.82rem; margin-top:.4rem;
+  }
+  table.xml-table th, table.xml-table td{
+    border:1px solid var(--line); padding:.45rem .55rem; text-align:left; vertical-align:top;
+  }
+  table.xml-table th{ background:#e7ede8; font-weight:600; }
+  details.xml-view{ margin-top:1.6rem; }
+  details.xml-view summary{
+    cursor:pointer; font-size:.78rem; color:var(--muted); text-transform:uppercase; letter-spacing:.08em;
+  }
+  pre.xml-pre{
+    background:#0d342f; color:#cfe6dc; padding:1rem; overflow-x:auto; font-size:.74rem;
+    border-radius:2px; margin-top:.6rem;
+  }
+
+  .verify-note{
+    font-size:.78rem; color:var(--muted); border-top:1px solid var(--line); padding-top:.9rem; margin-top:1.4rem;
+  }
+
+  footer{
+    max-width:960px; margin:0 auto; padding:1.5rem; color:var(--muted); font-size:.76rem;
+  }
+
+  @media (max-width:600px){
+    h1{ font-size:1.5rem; }
+    .panel, .result-body, .result-head{ padding:1.2rem; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="eyebrow mono">SNOMED CT &middot; Expression Constraint Language (ECL)</div>
+  <h1>Gut–Brain Interaction Disorder Classifier</h1>
+  <p class="sub">Classifies disorders of gut–brain interaction against Rome IV definitions bound to SNOMED CT concepts and Expression Constraint Language (ECL).</p>
+</header>
+
+<main>
+  <div id="app"></div>
+</main>
+
+<footer class="mono">
+  TERMINOLOGY BINDING: LOCAL XML SNAPSHOT — VALIDATE AGAINST THE LIVE NCTS FHIR TERMINOLOGY SERVER (snomed.digitalhealth.gov.au) BEFORE PRODUCTION USE.
+</footer>
+
+<!--
+  ============================================================
+  SNOMED CT / ECL TERM TABLE (XML data island)
+  Each <term> binds a Rome IV category to a SNOMED CT focus
+  concept, with the ECL used to retrieve the concept (and its
+  descendants) from a FHIR terminology server, e.g.:
+
+    GET [fhir-base]/ValueSet/$expand?url=http://snomed.info/sct?fhir_vs=ecl/<<25458004
+
+  Concept IDs below are seed bindings for local build/testing.
+  Re-resolve all <<focusConcept>> ECL expressions against the
+  National Clinical Terminology Service (NCTS) FHIR endpoint at
+  go-live, as SNOMED CT is versioned and IDs must be confirmed
+  against the currently published Australian edition.
+  ============================================================
+-->
+<script type="application/xml" id="snomedTermTable">
+<TerminologyTable release="AU edition (seed snapshot — verify via NCTS)" effectiveTime="">
+  <Term resultKey="RESULT_FUNCTIONAL_HEARTBURN">
+    <ConceptId>162031009</ConceptId>
+    <FSN>Heartburn (finding)</FSN>
+    <ECL>&lt;&lt;162031009 MINUS &lt;&lt;235595009</ECL>
+  </Term>
+  <Term resultKey="RESULT_REFLUX_HYPERSENSITIVITY">
+    <ConceptId>235595009</ConceptId>
+    <FSN>Gastro-oesophageal reflux disease (disorder)</FSN>
+    <ECL>&lt;&lt;235595009</ECL>
+  </Term>
+  <Term resultKey="RESULT_FUNCTIONAL_CHEST_PAIN">
+    <ConceptId>29857009</ConceptId>
+    <FSN>Chest pain (finding)</FSN>
+    <ECL>&lt;&lt;29857009 MINUS (&lt;&lt;413838009)</ECL>
+  </Term>
+  <Term resultKey="RESULT_FD_PDS">
+    <ConceptId>271681002</ConceptId>
+    <FSN>Dyspepsia (finding)</FSN>
+    <ECL>&lt;&lt;271681002 : 246075003 = &lt;&lt;79974005</ECL>
+  </Term>
+  <Term resultKey="RESULT_FD_EPS">
+    <ConceptId>271681002</ConceptId>
+    <FSN>Dyspepsia (finding)</FSN>
+    <ECL>&lt;&lt;271681002 : 246112005 = &lt;&lt;299002009</ECL>
+  </Term>
+  <Term resultKey="RESULT_FD_OVERLAP">
+    <ConceptId>271681002</ConceptId>
+    <FSN>Dyspepsia (finding)</FSN>
+    <ECL>&lt;&lt;271681002</ECL>
+  </Term>
+  <Term resultKey="RESULT_IBS_C">
+    <ConceptId>266569009</ConceptId>
+    <FSN>Irritable bowel syndrome with constipation (disorder)</FSN>
+    <ECL>&lt;&lt;25458004 : 116676008 = &lt;&lt;14760008</ECL>
+  </Term>
+  <Term resultKey="RESULT_IBS_D">
+    <ConceptId>266468003</ConceptId>
+    <FSN>Irritable bowel syndrome with diarrhoea (disorder)</FSN>
+    <ECL>&lt;&lt;25458004 : 116676008 = &lt;&lt;62315008</ECL>
+  </Term>
+  <Term resultKey="RESULT_IBS_M">
+    <ConceptId>25458004</ConceptId>
+    <FSN>Irritable bowel syndrome (disorder)</FSN>
+    <ECL>&lt;&lt;25458004 : 116676008 = (&lt;&lt;14760008 AND &lt;&lt;62315008)</ECL>
+  </Term>
+  <Term resultKey="RESULT_IBS_U">
+    <ConceptId>25458004</ConceptId>
+    <FSN>Irritable bowel syndrome (disorder)</FSN>
+    <ECL>&lt;&lt;25458004</ECL>
+  </Term>
+  <Term resultKey="RESULT_FUNCTIONAL_DIARRHEA">
+    <ConceptId>62315008</ConceptId>
+    <FSN>Diarrhoea (finding)</FSN>
+    <ECL>&lt;&lt;62315008 MINUS &lt;&lt;25458004</ECL>
+  </Term>
+  <Term resultKey="RESULT_FUNCTIONAL_BLOATING">
+    <ConceptId>248490000</ConceptId>
+    <FSN>Bloating (finding)</FSN>
+    <ECL>&lt;&lt;248490000 MINUS &lt;&lt;25458004</ECL>
+  </Term>
+  <Term resultKey="RESULT_FUNCTIONAL_CONSTIPATION">
+    <ConceptId>14760008</ConceptId>
+    <FSN>Constipation (finding)</FSN>
+    <ECL>&lt;&lt;14760008 MINUS (&lt;&lt;25458004 OR &lt;&lt;292879007)</ECL>
+  </Term>
+  <Term resultKey="RESULT_GLOBUS">
+    <ConceptId>162397003</ConceptId>
+    <FSN>Globus hystericus (finding)</FSN>
+    <ECL>&lt;&lt;162397003</ECL>
+  </Term>
+  <Term resultKey="RESULT_SUPRAGASTRIC_BELCHING">
+    <ConceptId>50315009</ConceptId>
+    <FSN>Belching (finding)</FSN>
+    <ECL>&lt;&lt;50315009 : 42752001 = 78564009</ECL>
+  </Term>
+  <Term resultKey="RESULT_GASTRIC_BELCHING">
+    <ConceptId>50315009</ConceptId>
+    <FSN>Belching (finding)</FSN>
+    <ECL>&lt;&lt;50315009</ECL>
+  </Term>
+  <Term resultKey="RESULT_RUMINATION">
+    <ConceptId>444991000124102</ConceptId>
+    <FSN>Rumination syndrome (disorder)</FSN>
+    <ECL>&lt;&lt;444991000124102</ECL>
+  </Term>
+  <Term resultKey="RESULT_CNVS">
+    <ConceptId>422587007</ConceptId>
+    <FSN>Nausea (finding)</FSN>
+    <ECL>(&lt;&lt;422587007 OR &lt;&lt;422400008) MINUS &lt;&lt;31318006</ECL>
+  </Term>
+  <Term resultKey="RESULT_CVS">
+    <ConceptId>56448008</ConceptId>
+    <FSN>Cyclical vomiting (disorder)</FSN>
+    <ECL>&lt;&lt;56448008</ECL>
+  </Term>
+</TerminologyTable>
+</script>
+
+<script>
+/* ============================================================
+   ROME IV DECISION TREE
+   ============================================================ */
+const tree = {
+  start: {
+    q: "What is the dominant symptom complex?",
+    help: "Choose the closest fit.",
+    options: [
+      {label:"Heartburn / chest discomfort / regurgitation without erosive disease", tag:"Esophageal", next:"esoph1"},
+      {label:"Upper abdominal pain or fullness, centered on meals", tag:"Gastroduodenal", next:"fd1"},
+      {label:"Abdominal pain associated with altered bowel habit", tag:"Bowel", next:"ibs1"},
+      {label:"Altered stool form/frequency WITHOUT predominant abdominal pain", tag:"Bowel", next:"bowel1"},
+      {label:"Globus sensation, belching, nausea/vomiting, or rumination", tag:"Gastroduodenal", next:"other1"}
+    ]
+  },
+  esoph1: {
+    q: "Has endoscopy / reflux monitoring excluded erosive reflux disease, eosinophilic esophagitis, and major motor disorders?",
+    options: [
+      {label:"Yes — structural and mucosal disease excluded", next:"esoph2"},
+      {label:"No — not yet worked up", next:"RESULT_NEEDS_WORKUP_ESOPH"}
+    ]
+  },
+  esoph2: {
+    q: "Is there abnormal acid exposure on ambulatory reflux monitoring?",
+    options: [
+      {label:"Normal acid exposure, symptoms NOT temporally associated with reflux events", next:"RESULT_FUNCTIONAL_HEARTBURN"},
+      {label:"Normal acid exposure, but symptoms triggered by physiologic reflux events", next:"RESULT_REFLUX_HYPERSENSITIVITY"},
+      {label:"Chest pain of presumed esophageal origin, cardiac causes excluded, no heartburn", next:"RESULT_FUNCTIONAL_CHEST_PAIN"}
+    ]
+  },
+  fd1: {
+    q: "Symptoms ≥3 months (onset ≥6 months ago), no structural/biochemical/metabolic cause, normal endoscopy?",
+    options: [
+      {label:"Yes, criteria met", next:"fd2"},
+      {label:"Not yet — duration not met or no endoscopy", next:"RESULT_NEEDS_WORKUP_FD"}
+    ]
+  },
+  fd2: {
+    q: "Which best describes the predominant pattern?",
+    options: [
+      {label:"Bothersome postprandial fullness or early satiation", tag:"PDS", next:"RESULT_FD_PDS"},
+      {label:"Bothersome epigastric pain or burning, not exclusively postprandial", tag:"EPS", next:"RESULT_FD_EPS"},
+      {label:"Both, equally prominent", tag:"Overlap", next:"RESULT_FD_OVERLAP"}
+    ]
+  },
+  ibs1: {
+    q: "Recurrent abdominal pain ≥1 day/week for 3 months (onset ≥6 months ago)?",
+    options: [
+      {label:"Yes", next:"ibs2"},
+      {label:"No / less frequent", next:"RESULT_PAIN_BELOW_THRESHOLD"}
+    ]
+  },
+  ibs2: {
+    q: "Pain associated with ≥2 of: related to defecation, change in stool frequency, change in stool form?",
+    options: [
+      {label:"Yes, ≥2 criteria met", next:"ibs3"},
+      {label:"No, pain doesn't track with bowel pattern", next:"RESULT_NOT_IBS_RECONSIDER"}
+    ]
+  },
+  ibs3: {
+    q: "On days with abnormal stools, predominant Bristol pattern?",
+    options: [
+      {label:">25% hard/lumpy (1–2), <25% loose/watery", tag:"IBS-C", next:"RESULT_IBS_C"},
+      {label:">25% loose/watery (6–7), <25% hard/lumpy", tag:"IBS-D", next:"RESULT_IBS_D"},
+      {label:">25% both hard/lumpy AND loose/watery", tag:"IBS-M", next:"RESULT_IBS_M"},
+      {label:"Neither reaches 25% threshold", tag:"IBS-U", next:"RESULT_IBS_U"}
+    ]
+  },
+  bowel1: {
+    q: "Is the predominant complaint constipation-type, with minimal pain, not opioid-induced?",
+    options: [
+      {label:"Yes — constipation-type, minimal pain, not opioids", next:"const1"},
+      {label:"No — loose/watery stools ≥75% of stools, no IBS pain criteria", next:"RESULT_FUNCTIONAL_DIARRHEA"},
+      {label:"No — bloating/distension predominates without IBS/constipation criteria", next:"RESULT_FUNCTIONAL_BLOATING"}
+    ]
+  },
+  const1: {
+    q: "≥2 of: straining, lumpy/hard stools, incomplete evacuation, anorectal blockage, manual maneuvers, or <3 spontaneous BMs/week (≥3 months, onset ≥6 months), loose stools rare, insufficient for IBS?",
+    options: [
+      {label:"Yes, criteria met", next:"RESULT_FUNCTIONAL_CONSTIPATION"},
+      {label:"No / unclear", next:"RESULT_NOT_FC_RECONSIDER"}
+    ]
+  },
+  other1: {
+    q: "Which symptom predominates?",
+    options: [
+      {label:"Persistent throat lump sensation between meals, no dysphagia/pain, structural causes excluded", tag:"Globus", next:"RESULT_GLOBUS"},
+      {label:"Bothersome repetitive belching", tag:"Belching", next:"belch1"},
+      {label:"Effortless regurgitation of recent food, re-chewed/re-swallowed or expelled, minutes after eating", tag:"Rumination", next:"RESULT_RUMINATION"},
+      {label:"Chronic nausea/vomiting without identifiable cause", tag:"CNVS", next:"RESULT_CNVS"},
+      {label:"Stereotypical episodic bouts of intense vomiting, symptom-free intervals", tag:"CVS", next:"RESULT_CVS"}
+    ]
+  },
+  belch1: {
+    q: "Is belching supragastric (air swallowing immediately precedes each belch) or gastric (normal venting)?",
+    options: [
+      {label:"Supragastric — rapid air swallowing precedes each belch, very high frequency", next:"RESULT_SUPRAGASTRIC_BELCHING"},
+      {label:"Gastric — normal physiologic venting, less frequent", next:"RESULT_GASTRIC_BELCHING"}
+    ]
+  }
+};
+
+/* ============================================================
+   RESULT CONTENT — management only, no literature references
+   ============================================================ */
+const results = {
+  RESULT_NEEDS_WORKUP_ESOPH:{ title:"Workup Incomplete — Esophageal Pathway", warn:true,
+    criteria:["Functional esophageal disorders require endoscopy and ambulatory reflux monitoring to exclude structural/mucosal disease before classification."],
+    recs:[{b:"Action",t:"Arrange upper endoscopy with biopsies and ambulatory pH/pH-impedance monitoring off (or on, if assessing refractory reflux) therapy before re-running this classifier."}]
+  },
+  RESULT_FUNCTIONAL_HEARTBURN:{ title:"Functional Heartburn",
+    criteria:["Retrosternal burning ≥3 days/week, ≥3 months (onset ≥6 months ago).","No relief with optimal antisecretory therapy.","GERD and eosinophilic esophagitis excluded.","No major esophageal motor disorder."],
+    recs:[
+      {b:"First line",t:"Central neuromodulation — low-dose tricyclic antidepressant or SSRI/SNRI — rather than continued acid suppression."},
+      {b:"Adjunct",t:"Taper/stop PPI if no objective benefit; gut-directed CBT or hypnotherapy for refractory symptoms."}
+    ]
+  },
+  RESULT_REFLUX_HYPERSENSITIVITY:{ title:"Reflux Hypersensitivity",
+    criteria:["Retrosternal symptoms ≥3 days/week, ≥3 months.","Normal endoscopy; EoE excluded.","Normal acid exposure but symptoms triggered by physiologic reflux events.","No major motor disorder."],
+    recs:[
+      {b:"First line",t:"Once-daily PPI trial — a subset respond despite normal acid exposure."},
+      {b:"If PPI fails",t:"Neuromodulator (TCA or SSRI) targeting esophageal hypersensitivity."},
+      {b:"Adjunct",t:"Diaphragmatic breathing / CBT for symptom-focused anxiety."}
+    ]
+  },
+  RESULT_FUNCTIONAL_CHEST_PAIN:{ title:"Functional Chest Pain (esophageal origin)",
+    criteria:["Retrosternal pain ≥1x/week, ≥3 months, cardiac cause excluded.","No dominant heartburn/dysphagia.","GERD, EoE, and motor disorder excluded."],
+    recs:[
+      {b:"Confirm",t:"Cardiac causes formally excluded prior to functional labelling."},
+      {b:"First line",t:"TCA or SSRI/SNRI as a visceral pain modulator."},
+      {b:"Adjunct",t:"CBT for symptom-related catastrophizing."}
+    ]
+  },
+  RESULT_NEEDS_WORKUP_FD:{ title:"Workup Incomplete — Dyspepsia Pathway", warn:true,
+    criteria:["Functional dyspepsia requires ≥3 months symptoms (onset ≥6 months ago) and exclusion of organic disease, typically via endoscopy."],
+    recs:[{b:"Action",t:"Obtain upper endoscopy if alarm features/age threshold apply; otherwise test-and-treat for H. pylori, then re-run this classifier."}]
+  },
+  RESULT_FD_PDS:{ title:"Functional Dyspepsia — Postprandial Distress Syndrome (PDS)",
+    criteria:["Bothersome postprandial fullness or early satiation ≥3 days/week.","≥3 months, onset ≥6 months ago, organic disease excluded."],
+    recs:[
+      {b:"Step 1",t:"Test for and treat Helicobacter pylori."},
+      {b:"Step 2",t:"Prokinetic agent or PPI trial for 8 weeks if H. pylori-negative or symptoms persist."},
+      {b:"Step 3",t:"Add a tricyclic antidepressant or mirtazapine, particularly with early satiety/weight loss."},
+      {b:"Step 4",t:"Gastric emptying study only if vomiting is prominent; gut-directed psychotherapy for refractory cases."}
+    ]
+  },
+  RESULT_FD_EPS:{ title:"Functional Dyspepsia — Epigastric Pain Syndrome (EPS)",
+    criteria:["Bothersome epigastric pain/burning ≥1 day/week, not exclusively postprandial.","≥3 months, onset ≥6 months ago, organic disease excluded."],
+    recs:[
+      {b:"Step 1",t:"Test for and treat H. pylori."},
+      {b:"Step 2",t:"8-week PPI trial."},
+      {b:"Step 3",t:"Tricyclic antidepressant if PPI fails."},
+      {b:"Step 4",t:"Reserve prokinetics for overlapping fullness symptoms."}
+    ]
+  },
+  RESULT_FD_OVERLAP:{ title:"Functional Dyspepsia — PDS/EPS Overlap",
+    criteria:["Criteria for both PDS and EPS met simultaneously."],
+    recs:[
+      {b:"Step 1",t:"Test for and treat H. pylori."},
+      {b:"Step 2",t:"Combine PPI (pain/burning) with a prokinetic (fullness/early satiety) for 8 weeks."},
+      {b:"Step 3",t:"Tricyclic antidepressant or mirtazapine if first-line therapy fails."}
+    ]
+  },
+  RESULT_PAIN_BELOW_THRESHOLD:{ title:"Pain Frequency Insufficient for IBS", warn:true,
+    criteria:["IBS requires recurrent pain ≥1 day/week over 3 months. Less frequent pain should redirect to the non-pain-predominant bowel pathway."],
+    recs:[{b:"Action",t:"Re-run via the 'altered stool form/frequency without predominant pain' branch."}]
+  },
+  RESULT_NOT_IBS_RECONSIDER:{ title:"Bowel-Pattern Association Not Met", warn:true,
+    criteria:["IBS requires pain associated with ≥2 of: defecation, stool frequency change, or stool form change."],
+    recs:[{b:"Consider",t:"Centrally Mediated Abdominal Pain Syndrome if pain is continuous and unrelated to eating, defecation, or menses."}]
+  },
+  RESULT_IBS_C:{ title:"Irritable Bowel Syndrome with Constipation (IBS-C)",
+    criteria:["Recurrent abdominal pain ≥1 day/week, 3 months (onset ≥6 months), ≥2 of defecation/frequency/form association.","On abnormal-stool days, >25% Bristol 1–2, <25% Bristol 6–7."],
+    recs:[
+      {b:"Step 1",t:"Soluble fiber (psyllium) and PEG-based laxatives; avoid insoluble fiber/bran."},
+      {b:"Step 2",t:"Guanylate cyclase-C agonist (linaclotide or plecanatide) for global IBS-C symptoms."},
+      {b:"Step 2 alt",t:"Lubiprostone, particularly in women."},
+      {b:"Step 3",t:"Tenapanor or tegaserod (restricted populations) if secretagogues not tolerated."},
+      {b:"Adjunct",t:"Gut-directed CBT/hypnotherapy; low-FODMAP diet trial with dietitian support."},
+      {b:"Avoid",t:"Antispasmodic monotherapy; long-term opioids."}
+    ]
+  },
+  RESULT_IBS_D:{ title:"Irritable Bowel Syndrome with Diarrhoea (IBS-D)",
+    criteria:["Recurrent abdominal pain ≥1 day/week, 3 months (onset ≥6 months), ≥2 of defecation/frequency/form association.","On abnormal-stool days, >25% Bristol 6–7, <25% Bristol 1–2."],
+    recs:[
+      {b:"Exclude",t:"Celiac serology in all patients; fecal calprotectin/CRP if IBD uncertainty."},
+      {b:"Step 1",t:"Low-FODMAP diet trial with dietitian guidance."},
+      {b:"Step 2",t:"Loperamide for stool-form control; rifaximin (550mg TID x14 days, retreatment permitted) for global symptoms."},
+      {b:"Step 3",t:"Eluxadoline or alosetron (severe IBS-D, after failing conventional therapy, with safety monitoring)."},
+      {b:"Adjunct",t:"Low-dose TCA for pain-predominant disease; gut-directed psychotherapy if refractory."}
+    ]
+  },
+  RESULT_IBS_M:{ title:"Irritable Bowel Syndrome, Mixed (IBS-M)",
+    criteria:["Recurrent abdominal pain ≥1 day/week, 3 months (onset ≥6 months), ≥2 of defecation/frequency/form association.","On abnormal-stool days, >25% Bristol 1–2 AND >25% Bristol 6–7."],
+    recs:[
+      {b:"General",t:"Treat the predominant symptom at presentation; titrate to the fluctuating pattern using a stool diary."},
+      {b:"Diet",t:"Low-FODMAP diet trial."},
+      {b:"Pain",t:"Low-dose TCA as a global symptom modulator."},
+      {b:"Avoid",t:"Committing to a fixed constipation- or diarrhea-directed agent without tracking."}
+    ]
+  },
+  RESULT_IBS_U:{ title:"Irritable Bowel Syndrome, Unsubtyped (IBS-U)",
+    criteria:["Meets pain/bowel-association criteria for IBS; stool pattern doesn't reach the 25% threshold for subtyping."],
+    recs:[
+      {b:"General",t:"Manage by predominant bother using a Bristol/symptom diary over several weeks to re-stratify."},
+      {b:"Pain",t:"Low-dose TCA or gut-directed psychotherapy for global symptom burden."}
+    ]
+  },
+  RESULT_FUNCTIONAL_DIARRHEA:{ title:"Functional Diarrhoea",
+    criteria:["Loose/watery stools ≥75% of stools, no predominant pain, ≥3 months (onset ≥6 months ago).","Insufficient pain/bowel association for IBS."],
+    recs:[
+      {b:"Exclude",t:"Celiac serology, fecal calprotectin, bile acid malabsorption, dietary/medication review."},
+      {b:"Step 1",t:"Soluble fiber and loperamide titrated to effect."},
+      {b:"Step 2",t:"Bile acid sequestrant trial if bile acid diarrhoea suspected."},
+      {b:"Step 3",t:"Rifaximin or low-FODMAP diet if overlapping bloating/gas."}
+    ]
+  },
+  RESULT_FUNCTIONAL_BLOATING:{ title:"Functional Bloating / Distension",
+    criteria:["Recurrent bloating/distension ≥1 day/week, ≥3 months (onset ≥6 months ago).","Not adequately explained by IBS, functional constipation, or functional diarrhoea."],
+    recs:[
+      {b:"Exclude",t:"Lactose/fructose intolerance, SIBO if suspected, celiac disease, pelvic floor dysfunction."},
+      {b:"Step 1",t:"Low-FODMAP diet trial; treat underlying constipation if present."},
+      {b:"Step 2",t:"Non-absorbable antibiotic or probiotic trial if gas-predominant and diet fails."},
+      {b:"Step 3",t:"Biofeedback/pelvic floor physiotherapy if abdomino-phrenic dyssynergia identified."}
+    ]
+  },
+  RESULT_FUNCTIONAL_CONSTIPATION:{ title:"Functional Constipation",
+    criteria:["≥2 of: straining, lumpy/hard stools, incomplete evacuation, anorectal obstruction sensation, manual maneuvers, <3 spontaneous BMs/week — for ≥25% of defecations, ≥3 months (onset ≥6 months ago).","Loose stools rarely present without laxatives; insufficient for IBS-C."],
+    recs:[
+      {b:"Exclude",t:"Secondary causes (hypothyroidism, hypercalcemia, medications); anorectal manometry/balloon expulsion if refractory."},
+      {b:"Step 1",t:"Soluble fiber and adequate hydration."},
+      {b:"Step 2",t:"Osmotic laxative (PEG) as preferred initial pharmacologic step."},
+      {b:"Step 3",t:"Secretagogue (linaclotide, plecanatide, lubiprostone) or prucalopride if inadequate."},
+      {b:"Step 4",t:"Biofeedback if dyssynergic defecation confirmed — preferred over laxatives alone in this subgroup."},
+      {b:"Avoid",t:"Long-term stimulant laxative monotherapy without fiber/osmotic agents first; opioids."}
+    ]
+  },
+  RESULT_NOT_FC_RECONSIDER:{ title:"Criteria for Functional Constipation Not Met", warn:true,
+    criteria:["Fewer than 2 supportive criteria met, or duration/frequency thresholds not satisfied."],
+    recs:[{b:"Action",t:"Review medication list for constipating agents (opioids, anticholinergics, iron, calcium channel blockers) before assigning a functional diagnosis."}]
+  },
+  RESULT_GLOBUS:{ title:"Globus",
+    criteria:["Persistent/intermittent non-painful throat lump sensation between meals.","No dysphagia/odynophagia.","≥3 months (onset ≥6 months ago); structural disease (incl. ENT exam) excluded."],
+    recs:[
+      {b:"Exclude",t:"ENT evaluation; reflux monitoring if concurrent reflux symptoms."},
+      {b:"Step 1",t:"Empiric PPI only if coexisting reflux symptoms present."},
+      {b:"Step 2",t:"Reassurance; speech-language pathology or low-dose TCA if persistent."}
+    ]
+  },
+  RESULT_SUPRAGASTRIC_BELCHING:{ title:"Supragastric Belching",
+    criteria:["Bothersome repetitive belching ≥3 days/week, shown to be predominantly supragastric.","Not attributable to GERD."],
+    recs:[
+      {b:"First line",t:"Speech-language pathology behavioural therapy / diaphragmatic breathing training."},
+      {b:"Adjunct",t:"Baclofen in refractory cases."},
+      {b:"Avoid",t:"PPI unless concurrent GERD present."}
+    ]
+  },
+  RESULT_GASTRIC_BELCHING:{ title:"Gastric Belching",
+    criteria:["Bothersome repetitive belching from normal physiologic gastric venting, ≥3 days/week."],
+    recs:[
+      {b:"Reassure",t:"Normal physiologic mechanism; reassurance is often sufficient."},
+      {b:"Reduce triggers",t:"Limit carbonated beverages, gum chewing, rapid eating."}
+    ]
+  },
+  RESULT_RUMINATION:{ title:"Rumination Syndrome",
+    criteria:["Effortless regurgitation of recently ingested food with spitting or remastication/re-swallow.","Not preceded by retching.","≥3 months (onset ≥6 months ago); not explained by another disorder."],
+    recs:[
+      {b:"Confirm",t:"High-resolution manometry with impedance to characterize the rise pattern and exclude GERD."},
+      {b:"First line",t:"Diaphragmatic breathing training via speech-language pathology/biofeedback."},
+      {b:"Adjunct",t:"Baclofen in refractory cases."}
+    ]
+  },
+  RESULT_CNVS:{ title:"Chronic Nausea and Vomiting Syndrome (CNVS)",
+    criteria:["Bothersome nausea ≥1 day/week and/or ≥1 vomiting episode/week.","Not self-induced/eating disorder/regurgitation/rumination; not explained by another cause.","≥3 months (onset ≥6 months ago)."],
+    recs:[
+      {b:"Exclude",t:"Gastric emptying study to differentiate gastroparesis; metabolic/CNS causes; cannabinoid use history."},
+      {b:"Step 1",t:"Antiemetics plus low-dose TCA or mirtazapine as central neuromodulators."},
+      {b:"Step 2",t:"Gut-directed psychological therapy if anxiety/depression amplify symptoms."}
+    ]
+  },
+  RESULT_CVS:{ title:"Cyclic Vomiting Syndrome (CVS)",
+    criteria:["Stereotypical episodes of intense nausea/vomiting <1 week duration.","≥3 episodes in the prior year and ≥2 in the past 6 months, separated by weeks-months, with return to baseline between episodes.","No vomiting during symptom-free interval; not explained by another condition."],
+    recs:[
+      {b:"Exclude",t:"Cannabinoid hyperemesis syndrome (detailed cannabis history); metabolic/mitochondrial causes if childhood/adolescent onset."},
+      {b:"Prophylaxis",t:"Amitriptyline first-line between episodes; topiramate as alternative."},
+      {b:"Abortive",t:"Early triptan at episode onset; antiemetics (ondansetron) plus supportive IV fluids."},
+      {b:"Adjunct",t:"Address comorbid migraine; screen for anxiety."}
+    ]
+  }
+};
+
+/* ============================================================
+   XML PARSING — load the SNOMED/ECL term table
+   ============================================================ */
+function loadTermTable(){
+  const xmlText = document.getElementById("snomedTermTable").textContent;
+  const xml = new DOMParser().parseFromString(xmlText, "application/xml");
+  const map = {};
+  xml.querySelectorAll("Term").forEach(t=>{
+    map[t.getAttribute("resultKey")] = {
+      conceptId: t.querySelector("ConceptId")?.textContent.trim(),
+      fsn: t.querySelector("FSN")?.textContent.trim(),
+      ecl: t.querySelector("ECL")?.textContent.trim()
+    };
+  });
+  return map;
+}
+const TERM_MAP = loadTermTable();
+
+/* ============================================================
+   ENGINE
+   ============================================================ */
+let path = ["start"];
+const appEl = document.getElementById("app");
+
+function renderQuestion(nodeId){
+  const node = tree[nodeId];
+  let html = `<div class="panel">
+    <div class="q-index mono">Step ${path.length}</div>
+    <p class="q-text">${node.q}</p>`;
+  if(node.help) html += `<p class="q-help">${node.help}</p>`;
+  html += `<div class="options">`;
+  node.options.forEach(opt=>{
+    html += `<button class="opt-btn" data-next="${opt.next}">${opt.label}${opt.tag ? `<span class="tag mono">${opt.tag}</span>`:""}</button>`;
+  });
+  html += `</div>
+    <div class="nav-row">
+      <button class="link-btn" id="backBtn" ${path.length<=1?"disabled":""}>&larr; back</button>
+      <button class="link-btn" id="restartBtn">restart</button>
+    </div>
+  </div>`;
+  appEl.innerHTML = html;
+
+  document.querySelectorAll(".opt-btn").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      path.push(btn.getAttribute("data-next"));
+      navigate(path[path.length-1]);
+    });
+  });
+  document.getElementById("backBtn").addEventListener("click", ()=>{
+    if(path.length>1){ path.pop(); navigate(path[path.length-1]); }
+  });
+  document.getElementById("restartBtn").addEventListener("click", restart);
+}
+
+function renderResult(resultId){
+  stage = "result";
+  const r = results[resultId];
+  const term = TERM_MAP[resultId];
+
+  let html = `<div class="result-head">
+      <div class="eyebrow mono">${r.warn ? "Action needed" : "Rome IV Category"}</div>
+      <h2>${r.title}</h2>`;
+  if(term && !r.warn){
+    html += `<div class="snomed-binding mono">
+        <span><b>SNOMED CT:</b> ${term.conceptId}</span>
+        <span><b>FSN:</b> ${term.fsn}</span>
+      </div>`;
+  }
+  html += `</div><div class="result-body">`;
+
+  html += `<h3>Diagnostic criteria met</h3><ul class="rec-list">`;
+  r.criteria.forEach(c=> html += `<li>${c}</li>`);
+  html += `</ul>`;
+
+  html += `<h3>${r.warn ? "Next steps" : "Management"}</h3><ul class="rec-list">`;
+  r.recs.forEach(rec=> html += `<li><b>${rec.b}:</b> ${rec.t}</li>`);
+  html += `</ul>`;
+
+  if(term && !r.warn){
+    html += `<h3>Terminology binding</h3>
+      <div class="ecl-row">
+        <span>ECL retrieval expression</span>
+        <span class="ecl-expr mono">${term.ecl}</span>
+      </div>
+      <p class="verify-note">Concept ID and ECL shown are a local seed binding. Re-resolve against the National Clinical Terminology Service (NCTS) FHIR ValueSet/$expand endpoint before this is used to drive coding in a clinical system.</p>`;
+  }
+
+  html += `<details class="xml-view"><summary>View underlying XML term record</summary>
+      <pre class="xml-pre">${term ? escapeXml(buildXmlSnippet(resultId, term)) : "No terminology binding for this outcome (pre-classification action item)."}</pre>
+    </details>`;
+
+  html += `</div>
+    <div class="nav-row" style="margin-top:1rem;">
+      <button class="link-btn" id="backBtn">&larr; back</button>
+      <button class="link-btn" id="restartBtn">restart</button>
+    </div>`;
+  appEl.innerHTML = html;
+
+  document.getElementById("backBtn").addEventListener("click", ()=>{
+    if(path.length>1){ path.pop(); navigate(path[path.length-1]); }
+  });
+  document.getElementById("restartBtn").addEventListener("click", restart);
+}
+
+function buildXmlSnippet(resultKey, term){
+  return `<Term resultKey="${resultKey}">
+  <ConceptId>${term.conceptId}</ConceptId>
+  <FSN>${term.fsn}</FSN>
+  <ECL>${term.ecl}</ECL>
+</Term>`;
+}
+function escapeXml(s){
+  return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+}
+
+function navigate(nodeId){
+  if(tree[nodeId]) renderQuestion(nodeId);
+  else if(results[nodeId]) renderResult(nodeId);
+}
+
+function restart(){
+  path = ["start"];
+  navigate("start");
+}
+
+navigate("start");
+</script>
+
+</body>
+</html>
